@@ -1,4 +1,4 @@
-# Implantação de um aplicativo React usando o AWS S3 e o Cloud Front
+# Implantação de um aplicativo React usando o AWS S3
 
  ### Pré-requisitos:
  * Node.js e npm
