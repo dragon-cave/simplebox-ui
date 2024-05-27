@@ -1,59 +1,78 @@
-import React from "react";
+import React, { useContext, useEffect } from "react";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Form, Input } from "antd";
 
 import styles from "./LoginPage.module.css";
+import { useNavigate } from "react-router-dom";
 
+import { AuthContext } from "../../contexts/AuthContext";
 const LoginPage = () => {
-  const onFinish = (values) => {
+  const { login, isLogged } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  useEffect(() => {navigate("/");}, [isLogged]);
+
+  const onFinish = async (values) => {
     console.log("Received values of form: ", values);
+    await login(values);
+    navigate("/");
   };
   return (
     <div className={styles.container}>
-    <img src="simplebox-logo.png" alt="SimpleBox" />
-    <Form
-      name="normal_login"
-      className={styles.loginForm}
-      initialValues={{
-        remember: true,
-      }}
-      onFinish={onFinish}
-    >
-      <Form.Item
-        name="username"
-        rules={[
-          {
-            required: true,
-            message: "Por favor, informe seu nome de usuário!",
-          },
-        ]}
+      <img src="simplebox-logo.png" alt="SimpleBox" />
+
+      <a
+        href="/cadastrar"
+        onClick={() => {
+          navigate("/cadastrar");
+        }}
       >
-        <Input
-          style={{ width: '360px' }}
-          size="large"
-          prefix={<UserOutlined className="site-form-item-icon" />}
-          placeholder="nome de usuário"
-          width={"1000px"}
-        />
-      </Form.Item>
-      <Form.Item
-        name="password"
-        rules={[
-          {
-            required: true,
-            message: "Por favor, informe sua senha!",
-          },
-        ]}
+        Fazer cadastro
+      </a>
+
+      <Form
+        name="normal_login"
+        className={styles.loginForm}
+        initialValues={{
+          remember: true,
+        }}
+        onFinish={onFinish}
       >
-        <Input
-        style={{ width: '360px' }}
-        size="large"
-          prefix={<LockOutlined className="site-form-item-icon" />}
-          type="password"
-          placeholder="senha"
-        />
-      </Form.Item>
-      {/* <Form.Item>
+        <Form.Item
+          name="username"
+          rules={[
+            {
+              required: true,
+              message: "Por favor, informe seu nome de usuário!",
+            },
+          ]}
+        >
+          <Input
+            style={{ width: "360px" }}
+            size="large"
+            prefix={<UserOutlined className="site-form-item-icon" />}
+            placeholder="nome de usuário"
+            width={"1000px"}
+          />
+        </Form.Item>
+        <Form.Item
+          name="password"
+          rules={[
+            {
+              required: true,
+              message: "Por favor, informe sua senha!",
+            },
+          ]}
+        >
+          <Input
+            style={{ width: "360px" }}
+            size="large"
+            prefix={<LockOutlined className="site-form-item-icon" />}
+            type="password"
+            placeholder="senha"
+          />
+        </Form.Item>
+        {/* <Form.Item>
         <Form.Item name="remember" valuePropName="checked" noStyle>
           <Checkbox>Remember me</Checkbox>
         </Form.Item>
@@ -63,15 +82,20 @@ const LoginPage = () => {
         </a>
       </Form.Item> */}
 
-      <Form.Item>
-        <Button type="primary" htmlType="submit" className="login-form-button" size="large" style={{ width: '360px' }}>
-          Entrar
-        </Button>
-        {/* Or <a href="">register now!</a> */}
-      </Form.Item>
-    </Form>
+        <Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            className="login-form-button"
+            size="large"
+            style={{ width: "360px" }}
+          >
+            Entrar
+          </Button>
+          {/* Or <a href="">register now!</a> */}
+        </Form.Item>
+      </Form>
     </div>
-    
   );
 };
 

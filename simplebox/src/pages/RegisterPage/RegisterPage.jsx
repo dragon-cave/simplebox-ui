@@ -1,26 +1,43 @@
 import React from "react";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
+import { useMutation } from 'react-query';
+
 import { Button, Checkbox, Form, Input } from "antd";
 
 import styles from "./RegisterPage.module.css";
 
+import { api, endpoints } from "../../services/api";
+import { useNavigate } from "react-router-dom";
+
+
 const RegisterPage = () => {
+  const navigate = useNavigate();
+
+  const mutation = useMutation(async (newUser) => {
+    try {
+      const response = await api.post(endpoints.register, newUser);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  }, {retry: false, onSuccess: () => {navigate('/entrar')}});
+
   const onFinish = (values) => {
-    console.log("Received values of form: ", values);
+    mutation.mutate(values);
   };
   return (
     <div className={styles.container}>
       <img src="simplebox-logo.png" alt="SimpleBox" />
       <Form
-        name="normal_login"
-        className={styles.loginForm}
+        name="singin"
+        className={styles.form}
         initialValues={{
           remember: true,
         }}
         onFinish={onFinish}
       >
         <Form.Item
-          name="fullName"
+          name="full_name"
           rules={[
             {
               required: true,
@@ -72,7 +89,7 @@ const RegisterPage = () => {
         </Form.Item>
 
         <Form.Item
-          name="password"
+          name="password1"
           rules={[
             {
               required: true,
@@ -90,7 +107,7 @@ const RegisterPage = () => {
         </Form.Item>
 
         <Form.Item
-          name="confirmPassword"
+          name="password2"
           rules={[
             {
               required: true,

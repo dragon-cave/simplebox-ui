@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
 import { api, endpoints } from "../services/api";
 export const AuthContext = createContext();
 
@@ -22,12 +22,13 @@ export const AuthProvider = ({ children }) => {
   const login = async ({username, password}) => {
     try {
       const response = await api.post(endpoints.login, { username, password });
-      localStorage.setItem("@Auth:token", response.data.token);
+      console.log(response);
+      localStorage.setItem("@Auth:token", response.data.access);
       localStorage.setItem("@Auth:user", response.data.user);
-      setUser(response.data.user);
+      setUser(response.user);
       api.defaults.headers.common[
         "Authorization"
-      ] = `Bearer ${response.data.token}`;
+      ] = `Bearer ${response.data.access}`;
     } catch (error) {
       console.log(error);
     }
