@@ -1,7 +1,7 @@
 import axios from "axios";
-
+console.log(import.meta.env.VITE_BASE_URL);
 export const api = axios.create({
-  baseURL: "http://10.243.127.144:8000/api",
+  baseURL: import.meta.env.VITE_BASE_URL,
 });
 
 export const endpoints = {

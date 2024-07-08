@@ -10,7 +10,12 @@ const LoginPage = () => {
   const { login, isLogged } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  //useEffect(() => {navigate("/");}, [isLogged]);
+  useEffect(() => {
+    console.log(`isLogged: ${isLogged}`)
+    if (isLogged) {
+      navigate("/");
+    }
+  }, [isLogged]);
 
   const onFinish = async (values) => {
     console.log("Received values of form: ", values);

@@ -3,7 +3,7 @@ import { api, endpoints } from "../services/api";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [isLogged, setIsLogged] = useState(false)
   const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
@@ -11,10 +11,11 @@ export const AuthProvider = ({ children }) => {
       const storedUser = localStorage.getItem("@Auth:user");
       const storedToken = localStorage.getItem("@Auth:token");
       if (storedUser && storedToken) {
-        setUser(storedUser);
+        setIsLogged(true);
         api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
       }
     };
+
     loadUser();
     setIsVerified(true);
   }, []);
@@ -24,11 +25,11 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post(endpoints.login, { username, password });
       console.log(response);
       localStorage.setItem("@Auth:token", response.data.access);
-      localStorage.setItem("@Auth:user", response.data.user);
-      setUser(response.user);
       api.defaults.headers.common[
         "Authorization"
       ] = `Bearer ${response.data.access}`;
+      setIsLogged(true);
+      console.log(`login: ${isLogged}`)
     } catch (error) {
       console.log(error);
     }
@@ -36,12 +37,11 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("@Auth:token");
-    localStorage.removeItem("@Auth:user");
-    setUser(null);
     delete api.defaults.headers.common["Authorization"];
+    setIsLogged(false);
   };
   return (
-    <AuthContext.Provider value={{ user, isLogged: !!user, login, logout }}>
+    <AuthContext.Provider value={{isLogged, login, logout }}>
       {isVerified && children}
     </AuthContext.Provider>
   );
