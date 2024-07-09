@@ -8,9 +8,8 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const loadUser = async () => {
-      const storedUser = localStorage.getItem("@Auth:user");
       const storedToken = localStorage.getItem("@Auth:token");
-      if (storedUser && storedToken) {
+      if (storedToken) {
         setIsLogged(true);
         api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
       }
@@ -23,22 +22,25 @@ export const AuthProvider = ({ children }) => {
   const login = async ({username, password}) => {
     try {
       const response = await api.post(endpoints.login, { username, password });
-      console.log(response);
       localStorage.setItem("@Auth:token", response.data.access);
+      localStorage.setItem("@Auth:refreshToken", response.data.refresh);
       api.defaults.headers.common[
         "Authorization"
       ] = `Bearer ${response.data.access}`;
       setIsLogged(true);
-      console.log(`login: ${isLogged}`)
     } catch (error) {
-      console.log(error);
+      return
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // const refresh = localStorage.getItem("@Auth:refreshToken")
+    // await api.post(endpoints.logout, { refresh })
     localStorage.removeItem("@Auth:token");
+    localStorage.removeItem("@Auth:refreshToken");
     delete api.defaults.headers.common["Authorization"];
     setIsLogged(false);
+    console.log("logged out - pedro safado")
   };
   return (
     <AuthContext.Provider value={{isLogged, login, logout }}>

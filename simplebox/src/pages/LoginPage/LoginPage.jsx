@@ -11,14 +11,12 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log(`isLogged: ${isLogged}`)
     if (isLogged) {
       navigate("/");
     }
   }, [isLogged]);
 
   const onFinish = async (values) => {
-    console.log("Received values of form: ", values);
     await login(values);
     navigate("/");
   };
@@ -69,11 +67,10 @@ const LoginPage = () => {
             },
           ]}
         >
-          <Input
+          <Input.Password 
             style={{ width: "360px" }}
             size="large"
             prefix={<LockOutlined className="site-form-item-icon" />}
-            type="password"
             placeholder="senha"
           />
         </Form.Item>
