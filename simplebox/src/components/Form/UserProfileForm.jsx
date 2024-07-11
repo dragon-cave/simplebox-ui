@@ -1,11 +1,20 @@
 // src/components/UserProfileForm.jsx
-import React, { useState } from "react";
-import { Form, Input, Button } from "antd";
+import React, { useEffect } from "react";
+import { Form, Input, Button, Row, Col } from "antd";
 import { api, endpoints } from "../../services/api";
 import { useMutation } from "react-query";
 
-const UserProfileForm = () => {
+const UserProfileForm = ({title}) => {
   const [form] = Form.useForm();
+
+  const getUser = async () => {
+    const response = await api.get(endpoints.user);
+    form.setFieldsValue(response.data);
+  };
+
+  useEffect(() => {
+    getUser();
+  }, []);
 
   const mutation = useMutation(
     async (values) => {
@@ -14,64 +23,83 @@ const UserProfileForm = () => {
     },
     {
       onSuccess: () => {
-        alert("Profile updated successfully");
+        alert("Perfil atualizado com sucesso!");
       },
       onError: () => {
-        alert("Failed to update profile");
+        alert("Falha ao atualizar perfil!");
       },
     }
   );
 
-  const onFinish = (values) => {
-    mutation.mutate(values);
+  const onFinish = async (values) => {
+    await mutation.mutateAsync(values);
   };
 
   return (
-    <Form
-      form={form}
-      name="user-profile"
-      layout="vertical"
-      onFinish={onFinish}
-      initialValues={{
-        fullName: "",
-        email: "",
-        password: "",
-      }}
-    >
-      <Form.Item
-        name="full_name"
-        label="Full Name"
-        rules={[{ required: true, message: "Please input your full name!" }]}
+    <div style={{ padding: "25px" }}>
+      <h1>{title}</h1>
+      <Form
+        form={form}
+        name="user-profile"
+        layout="vertical"
+        onFinish={onFinish}
+        wrapperCol={{ flex: 2 }}
+        // colon={false}
+        // style={{ maxWidth: 1000 }}
       >
-        <Input />
-      </Form.Item>
-      <Form.Item
-        name="email"
-        label="Email"
-        rules={[{ required: true, message: "Please input your email!" }]}
-      >
-        <Input />
-      </Form.Item>
-      <Form.Item
-        name="description"
-        label="Descrição do Usuário"
-        rules={[{ required: true, message: "Please input your email!" }]}
-      >
-        <Input />
-      </Form.Item>
-      <Form.Item
-        name="password"
-        label="Password"
-        rules={[{ required: true, message: "Please input your password!" }]}
-      >
-        <Input.Password />
-      </Form.Item>
-      <Form.Item>
-        <Button type="primary" htmlType="submit">
-          Update Profile
-        </Button>
-      </Form.Item>
-    </Form>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="username"
+              label="Username"
+              rules={[
+                { required: true, message: "Please input your full name!" },
+              ]}
+            >
+              <Input disabled />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="full_name"
+              label="Nome Completo"
+              rules={[
+                { required: true, message: "Please input your full name!" },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="description"
+              label="Descrição"
+              rules={[{ required: true, message: "Please input your email!" }]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[{ required: true, message: "Please input your email!" }]}
+            >
+              <Input disabled />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            Atualizar Perfil
+          </Button>
+        </Form.Item>
+      </Form>
+    </div>
   );
 };
 

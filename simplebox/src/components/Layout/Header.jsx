@@ -17,10 +17,14 @@ const LayoutHeader = () => {
         backgroundColor: "#1B4965",
       }}
     >
-      <img src="\Logo.png" alt="MyApp Logo" style={{ color: "white" }} />
+      {/* <div> */}
+        {/* <a href="/"> */}
+          <img src="\Logo.png" alt="MyApp Logo" style={{ color: "white" }} />
+        {/* </a> */}
+      {/* </div> */}
 
       <div style={{ display: "flex", alignItems: "center" }}>
-        <a href="/user">
+        <a href="/meu-perfil">
           <Avatar icon={<UserOutlined />} style={{ marginRight: "16px" }} />
         </a>
         <Button
@@ -28,7 +32,9 @@ const LayoutHeader = () => {
           type="text"
           size="large"
           style={{ color: "white" }}
-          onClick={() => {logout()}}
+          onClick={() => {
+            logout();
+          }}
         ></Button>
       </div>
     </Header>

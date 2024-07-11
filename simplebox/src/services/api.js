@@ -7,7 +7,9 @@ export const api = axios.create({
 export const endpoints = {
   login: "/auth/login/",
   logout: "/auth/logout/",
+  refresh: "/auth/refresh/",
   register: "/auth/register/",
+  userChangePassword: "/auth/password-change/",
   files: "/files/",
-  user: "/user/"
+  user: "/user/",
 };
