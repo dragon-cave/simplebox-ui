@@ -16,9 +16,8 @@ const RegisterPage = () => {
   const mutation = useMutation(async (newUser) => {
     try {
       const response = await api.post(endpoints.register, newUser);
-      console.log(response);
     } catch (error) {
-      console.log(error);
+      return 
     }
   }, {retry: false, onSuccess: () => {navigate('/entrar')}});
 

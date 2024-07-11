@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, Checkbox, Form, Input } from "antd";
+import { Button, Form, Input } from "antd";
 
 import styles from "./LoginPage.module.css";
 import { useNavigate } from "react-router-dom";
@@ -11,14 +11,12 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log(`isLogged: ${isLogged}`)
     if (isLogged) {
       navigate("/");
     }
   }, [isLogged]);
 
   const onFinish = async (values) => {
-    console.log("Received values of form: ", values);
     await login(values);
     navigate("/");
   };
@@ -69,11 +67,10 @@ const LoginPage = () => {
             },
           ]}
         >
-          <Input
+          <Input.Password 
             style={{ width: "360px" }}
             size="large"
             prefix={<LockOutlined className="site-form-item-icon" />}
-            type="password"
             placeholder="senha"
           />
         </Form.Item>
