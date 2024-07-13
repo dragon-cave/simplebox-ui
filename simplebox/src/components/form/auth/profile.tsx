@@ -1,14 +1,18 @@
 // src/components/UserProfileForm.jsx
-import React, { useEffect } from "react";
-import { Form, Input, Button, Row, Col } from "antd";
-import { api, endpoints } from "../../services/api";
+import { useEffect, useState } from "react";
+import { Form, Input, Button, Row, Col, message } from "antd";
+import { api, endpoints } from "../../../services/api";
 import { useMutation } from "react-query";
 
-const UserProfileForm = ({title}) => {
+const UserProfileForm = ({title}: {title: string}) => {
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [isChanged, setIsChanged] = useState(false);
 
   const getUser = async () => {
+    setLoading(true);
     const response = await api.get(endpoints.user);
+    setLoading(false);
     form.setFieldsValue(response.data);
   };
 
@@ -18,53 +22,55 @@ const UserProfileForm = ({title}) => {
 
   const mutation = useMutation(
     async (values) => {
+      setLoading(true);
       const response = await api.patch(endpoints.user, values);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setLoading(false);
       return response.data;
     },
     {
       onSuccess: () => {
-        alert("Perfil atualizado com sucesso!");
+        message.success("Perfil atualizado com sucesso!");
       },
       onError: () => {
-        alert("Falha ao atualizar perfil!");
+        message.error("Falha ao atualizar perfil!");
       },
     }
   );
 
-  const onFinish = async (values) => {
+  const onFinish = async (values: void) => {
     await mutation.mutateAsync(values);
   };
 
   return (
-    <div style={{ padding: "25px" }}>
+    <div >
       <h1>{title}</h1>
       <Form
         form={form}
         name="user-profile"
         layout="vertical"
+        disabled={loading}
         onFinish={onFinish}
-        wrapperCol={{ flex: 2 }}
-        // colon={false}
-        // style={{ maxWidth: 1000 }}
+        onFieldsChange={() => {setIsChanged(true)}}
       >
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               name="username"
               label="Username"
               rules={[
-                { required: true, message: "Please input your full name!" },
+                { required: false, message: "Por favor, insira seu username." },
               ]}
             >
               <Input disabled />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               name="full_name"
               label="Nome Completo"
               rules={[
-                { required: true, message: "Please input your full name!" },
+                { required: false, message: "Por favor, insira seu nome completo." },
               ]}
             >
               <Input />
@@ -73,20 +79,20 @@ const UserProfileForm = ({title}) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               name="description"
               label="Descrição"
-              rules={[{ required: true, message: "Please input your email!" }]}
+              rules={[{ required: false, message: "Por favor, insira uma descrição." }]}
             >
               <Input />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               name="email"
               label="Email"
-              rules={[{ required: true, message: "Please input your email!" }]}
+              rules={[{ required: false, message: "Por favor, insira seu email" }]}
             >
               <Input disabled />
             </Form.Item>
@@ -94,11 +100,11 @@ const UserProfileForm = ({title}) => {
         </Row>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" disabled={loading || !isChanged }>
             Atualizar Perfil
           </Button>
         </Form.Item>
-      </Form>
+      </Form> 
     </div>
   );
 };

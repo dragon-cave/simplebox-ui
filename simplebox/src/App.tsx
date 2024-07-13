@@ -1,5 +1,4 @@
-import "./App.css";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/authContext";
 import { QueryClient, QueryClientProvider } from "react-query";
 
 import AppRouter from "./routes";

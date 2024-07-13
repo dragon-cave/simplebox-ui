@@ -1,11 +1,10 @@
-import React from "react";
+import { ReactNode } from "react";
 import { Layout, theme } from "antd";
-const { Footer } = Layout;
-import LayoutHeader from "./Header";
+import LayoutHeader from "./header";
 
-const { Content } = Layout;
+const { Footer, Content } = Layout;
 
-const RootLayout = ({ children }) => {
+const RootLayout = ({ children }: { children: ReactNode }) => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();

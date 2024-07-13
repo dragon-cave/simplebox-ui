@@ -1,10 +1,10 @@
 import { Route, Routes, BrowserRouter } from "react-router-dom";
-import DashboardPage from "../pages/DashboardPage/DashBoardPage";
-import LoginPage from "../pages/LoginPage/LoginPage";
-import RegisterPage from "../pages/RegisterPage/RegisterPage";
-import PrivateRoutes from "./PrivateRoutes";
-import UserPage from "../pages/UserPage/page";
-import AuthRoutes from "./AuthRoutes";
+import DashboardPage from "../pages/home/dashboard/page";
+import LoginPage from "../pages/auth/login/page";
+import RegisterPage from "../pages/auth/register/page";
+import PrivateRoutes from "./privateRoutes";
+import UserPage from "../pages/home/profile/page";
+import AuthRoutes from "./authRotes";
 
 const AppRouter = () => {
   return (

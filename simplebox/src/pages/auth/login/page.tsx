@@ -1,14 +1,14 @@
-import React, { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, Form, Input } from "antd";
-
-import styles from "./LoginPage.module.css";
+import { Button, Form, Input, message } from "antd";
+import styles from "./style.module.css";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../../contexts/authContext";
 
-import { AuthContext } from "../../contexts/AuthContext";
 const LoginPage = () => {
-  const { login, isLogged } = useContext(AuthContext);
+  const { login, isLogged } = useContext(AuthContext) || {};
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isLogged) {
@@ -16,26 +16,27 @@ const LoginPage = () => {
     }
   }, [isLogged]);
 
-  const onFinish = async (values) => {
-    await login(values);
-    navigate("/");
+  const onFinish = async (values: { username: string; password: string }) => {
+    if (login) {
+      try {
+        setLoading(true);
+        await login(values);
+        setLoading(false);
+        message.success("Login efetuado com sucesso!");
+        navigate("/");;
+      } catch (error: any) {
+        setLoading(false);
+        message.error(error.message);
+      }
+    }
   };
   return (
     <div className={styles.container}>
       <img src="simplebox-logo.png" alt="SimpleBox" />
-
-      <a
-        href="/cadastrar"
-        onClick={() => {
-          navigate("/cadastrar");
-        }}
-      >
-        Fazer cadastro
-      </a>
-
       <Form
         name="normal_login"
         className={styles.loginForm}
+        disabled={loading}
         initialValues={{
           remember: true,
         }}
@@ -67,22 +68,21 @@ const LoginPage = () => {
             },
           ]}
         >
-          <Input.Password 
+          <Input.Password
             style={{ width: "360px" }}
             size="large"
             prefix={<LockOutlined className="site-form-item-icon" />}
             placeholder="senha"
           />
         </Form.Item>
-        {/* <Form.Item>
+        <Form.Item>
         <Form.Item name="remember" valuePropName="checked" noStyle>
-          <Checkbox>Remember me</Checkbox>
-        </Form.Item>
+          {/* <Checkbox>Remember me</Checkbox> */}
 
-        <a className="login-form-forgot" href="">
-          Forgot password
-        </a>
-      </Form.Item> */}
+        </Form.Item>      
+        Não tem uma conta?{" "} 
+        <a href="/cadastrar">Criar uma conta</a>
+      </Form.Item>
 
         <Form.Item>
           <Button

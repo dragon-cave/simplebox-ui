@@ -1,0 +1,34 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1b4965;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.logo {
+  color: white;
+  height: auto; 
+}
+
+.profileSection {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  margin-right: 16px;
+}
+
+.logoutIcon {
+  font-size: 25px;
+}
+
+.logoutButton {
+  color: white;
+}

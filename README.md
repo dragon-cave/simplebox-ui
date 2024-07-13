@@ -11,8 +11,6 @@ cd simplebox
 npm run dev
 ```
 
+# Stack
 
-## Estou usando 
-react-router-dom
-axios
-antd
+React - TypeScript - Antd
