@@ -23,7 +23,7 @@ const LoginPage = () => {
         await login(values);
         setLoading(false);
         message.success("Login efetuado com sucesso!");
-        navigate("/");;
+        navigate("/");
       } catch (error: any) {
         setLoading(false);
         message.error(error.message);

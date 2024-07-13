@@ -9,6 +9,12 @@
     }
   ],
   "compilerOptions": {
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "module": "esnext",
+    "target": "ES2020",
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "typeRoots": ["./node_modules/@types", "./custom.d.ts"]
+  },
+  "types": ["node", "jest", "@testing-library/jest-dom"],
 }
