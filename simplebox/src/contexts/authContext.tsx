@@ -4,10 +4,24 @@ import { api, endpoints } from "../services/api";
 interface AuthContextType {
   isLogged: boolean;
   login: (data: { username: string; password: string }) => Promise<void>;
+  register: (data: {
+    username: string;
+    password1: string;
+    password2: string;
+    email: string;
+    full_name: string;
+  }) => Promise<void>;
   logout: () => void;
+  userChangePassword: (data: {
+    old_password: string;
+    new_password1: string;
+    new_password2: string;
+  }) => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -57,7 +71,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const refresh = localStorage.getItem("@Auth:refreshToken");
         const response = await api.post(endpoints.refresh, { refresh });
         localStorage.setItem("@Auth:token", response.data.access);
-        api.defaults.headers.common["Authorization"] = `Bearer ${response.data.access}`;
+        api.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${response.data.access}`;
+        setIsLogged(false);
         loadUser();
         return api.request(error.config);
       }
@@ -84,31 +101,123 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     loadUser();
     setIsVerified(true);
-  }, []);
+  }, [isVerified]);
 
-  const login = async ({ username, password }: { username: string; password: string }) => {
+  const login = async ({
+    username,
+    password,
+  }: {
+    username: string;
+    password: string;
+  }) => {
     try {
       const response = await api.post(endpoints.login, { username, password });
       localStorage.setItem("@Auth:token", response.data.access);
       localStorage.setItem("@Auth:refreshToken", response.data.refresh);
-      api.defaults.headers.common["Authorization"] = `Bearer ${response.data.access}`;
+      api.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${response.data.access}`;
       setIsLogged(true);
     } catch (error: any) {
       if (error.response) {
         switch (error.response.status) {
           case 400:
-            throw new Error("Solicitação inválida. Verifique os dados e tente novamente.");
+            let errorMessage;
+            if (error.response.data.non_field_errors) {
+              errorMessage = error.response.data.non_field_errors;
+            } else {
+              errorMessage =
+                "Solicitação inválida. Verifique os dados e tente novamente.";
+            }
+            throw new Error(errorMessage);
           case 401:
-            throw new Error("Credenciais inválidas. Por favor, tente novamente.");
+            throw new Error(
+              "Credenciais inválidas. Por favor, tente novamente."
+            );
           case 404:
-            throw new Error("Endpoint não encontrado. Verifique a URL e tente novamente.");
+            throw new Error(
+              "Endpoint não encontrado. Verifique a URL e tente novamente."
+            );
           case 500:
-            throw new Error("Erro no servidor. Por favor, tente novamente mais tarde.");
+            throw new Error(
+              "Erro no servidor. Por favor, tente novamente mais tarde."
+            );
           default:
             throw new Error("Ocorreu um erro. Por favor, tente novamente.");
         }
       } else {
-        throw new Error("Falha na conexão. Por favor, verifique sua conexão com a internet e tente novamente.");
+        throw new Error(
+          "Falha na conexão. Por favor, verifique sua conexão com a internet e tente novamente."
+        );
+      }
+    }
+  };
+
+  const register = async ({
+    username,
+    password1,
+    password2,
+    email,
+    full_name,
+  }: {
+    username: string;
+    password1: string;
+    password2: string;
+    email: string;
+    full_name: string;
+  }) => {
+    try {
+      const response = await api.post(endpoints.register, {
+        username,
+        password1,
+        password2,
+        email,
+        full_name,
+      });
+      localStorage.setItem("@Auth:token", response.data.access);
+      localStorage.setItem("@Auth:refreshToken", response.data.refresh);
+      api.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${response.data.access}`;
+      setIsLogged(true);
+    } catch (error: any) {
+      if (error.response) {
+        console.log(error.response);
+        switch (error.response.status) {
+          case 400:
+            let errorMessage;
+            if (error.response.data.password1) {
+              errorMessage = error.response.data.password1;
+            } else if (error.response.data.password2) {
+              errorMessage = error.response.data.password2;
+            } else if (error.response.data.email) {
+              errorMessage = error.response.data.email;
+            } else if (error.response.data.username) {
+              errorMessage = error.response.data.username;
+            } else {
+              errorMessage =
+                "Solicitação inválida. Verifique os dados e tente novamente.";
+            }
+            throw new Error(errorMessage);
+          case 401:
+            throw new Error(
+              "Credenciais inválidas. Por favor, tente novamente."
+            );
+          case 404:
+            throw new Error(
+              "Endpoint não encontrado. Verifique a URL e tente novamente."
+            );
+          case 500:
+            throw new Error(
+              "Erro no servidor. Por favor, tente novamente mais tarde."
+            );
+          default:
+            throw new Error("Ocorreu um erro. Por favor, tente novamente.");
+        }
+      } else {
+        throw new Error(
+          "Falha na conexão. Por favor, verifique sua conexão com a internet e tente novamente."
+        );
       }
     }
   };
@@ -120,8 +229,59 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setIsLogged(false);
   };
 
+  const userChangePassword = async ({
+    old_password,
+    new_password1,
+    new_password2,
+  }: {
+    old_password: string;
+    new_password1: string;
+    new_password2: string;
+  }) => {
+    try {
+      const response = await api.post(endpoints.userChangePassword, {
+        old_password,
+        new_password1,
+        new_password2,
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            let errorMessage;
+            if (error.response.data.detail) {
+              errorMessage = error.response.data.detail;
+            } else {
+              errorMessage =
+                "Solicitação inválida. Verifique os dados e tente novamente.";
+            }
+            throw new Error(errorMessage);
+          case 401:
+            throw new Error(
+              "Credenciais inválidas. Por favor, tente novamente."
+            );
+          case 404:
+            throw new Error(
+              "Endpoint não encontrado. Verifique a URL e tente novamente."
+            );
+          case 500:
+            throw new Error(
+              "Erro no servidor. Por favor, tente novamente mais tarde."
+            );
+          default:
+            throw new Error("Ocorreu um erro. Por favor, tente novamente.");
+        }
+      } else {
+        throw new Error(
+          "Falha na conexão. Por favor, verifique sua conexão com a internet e tente novamente."
+        );
+      }
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ isLogged, login, logout }}>
+    <AuthContext.Provider value={{ isLogged, login, register, logout, userChangePassword }}>
       {isVerified && children}
     </AuthContext.Provider>
   );
