@@ -42,7 +42,7 @@ const UserChangePasswordForm = ({ title }: { title: string }) => {
           label="Senha Atual"
           rules={[
             {
-              min: 8,
+              // min: 8,
               required: true,
               message:
                 "Por favor insira sua senha atual! (mínimo 8 caracteres)",

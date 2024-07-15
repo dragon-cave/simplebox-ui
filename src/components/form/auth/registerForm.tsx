@@ -88,6 +88,7 @@ const RegisterPage = () => {
         name="email"
         rules={[
           {
+            type: "email",
             required: true,
             whitespace: true,
             message: "Por favor, informe seu email!",

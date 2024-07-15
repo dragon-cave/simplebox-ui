@@ -1,38 +1,29 @@
-/* styles/Dashboard.css */
-.dashboardContainer {
-    display: flex;
+/* style.module.css */
+.dashboardContent {
+  padding: 16px;
+}
+
+@media only screen and (max-width: 768px) {
+  .dashboardContent {
+    padding: 8px;
+  }
+}
+
+.flexContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+@media only screen and (max-width: 768px) {
+  .flexContainer {
     flex-direction: column;
-    padding: 16px 48px;
   }
-  
-  .controlsContainer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
+}
+
+/* style.module.css */
+@media only screen and (max-width: 600px) {
+  .column-hide {
+    display: none;
   }
-  
-  .controlGroup {
-    flex-grow: 1; /* Permite que o grupo de rádio cresça e use espaço disponível */
-  }
-  
-  .uploadButton {
-    margin-left: 16px; /* Espaço entre o grupo de rádio e o botão de upload */
-  }
-  
-  @media (max-width: 768px) {
-    .controlsContainer {
-      flex-direction: column;
-      align-items: stretch;
-    }
-  
-    .uploadButton {
-      margin-left: 0;
-      margin-top: 10px; /* Espaço entre os controles e o botão de upload em telas pequenas */
-    }
-  }
-  
-  .tableContainer {
-    overflow-x: auto;
-  }
-  
+}

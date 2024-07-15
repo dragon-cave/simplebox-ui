@@ -68,34 +68,46 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     },
     async (error) => {
       if (error.response.status === 401) {
-        const refresh = localStorage.getItem("@Auth:refreshToken");
-        const response = await api.post(endpoints.refresh, { refresh });
-        localStorage.setItem("@Auth:token", response.data.access);
-        api.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${response.data.access}`;
-        setIsLogged(false);
-        loadUser();
-        return api.request(error.config);
+        const refreshToken = localStorage.getItem("@Auth:refreshToken");
+        if (!refreshToken || isJwtExpired(refreshToken)) {
+          // Limpa o localStorage e redireciona para a tela de login
+          localStorage.clear();
+          window.location.href = '/entrar'; 
+          return Promise.reject('Refresh token expired');
+        }
+  
+        try {
+          const response = await api.post(endpoints.refresh, { refresh: refreshToken });
+          localStorage.setItem("@Auth:token", response.data.access);
+          api.defaults.headers.common["Authorization"] = `Bearer ${response.data.access}`;
+          return api.request(error.config);
+        } catch (refreshError) {
+          localStorage.clear();
+          window.location.href = '/entrar'; 
+          return Promise.reject(refreshError);
+        }
       }
       return Promise.reject(error);
     }
   );
-
+  
   const loadUser = async () => {
     let storedToken = localStorage.getItem("@Auth:token");
-    // console.log(`Is token expired ${storedToken ? isJwtExpired(storedToken) : false}`);
     if (storedToken && isJwtExpired(storedToken)) {
-      const response = await api.post(endpoints.refresh, {
-        refresh: localStorage.getItem("@Auth:refreshToken"),
-      });
+      const refreshToken = localStorage.getItem("@Auth:refreshToken");
+      if (!refreshToken || isJwtExpired(refreshToken)) {
+        localStorage.clear();
+        window.location.href = '/entrar'; 
+        return;
+      }
+      const response = await api.post(endpoints.refresh, { refresh: refreshToken });
       localStorage.setItem("@Auth:token", response.data.access);
     }
     storedToken = localStorage.getItem("@Auth:token");
     if (storedToken) {
       setIsLogged(true);
       api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
-    }
+    } 
   };
 
   useEffect(() => {
@@ -167,19 +179,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     full_name: string;
   }) => {
     try {
-      const response = await api.post(endpoints.register, {
+      await api.post(endpoints.register, {
         username,
         password1,
         password2,
         email,
         full_name,
       });
-      localStorage.setItem("@Auth:token", response.data.access);
-      localStorage.setItem("@Auth:refreshToken", response.data.refresh);
-      api.defaults.headers.common[
-        "Authorization"
-      ] = `Bearer ${response.data.access}`;
-      setIsLogged(true);
     } catch (error: any) {
       if (error.response) {
         console.log(error.response);
