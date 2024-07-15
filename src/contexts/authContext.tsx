@@ -256,8 +256,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         switch (error.response.status) {
           case 400:
             let errorMessage;
-            if (error.response.data.detail) {
-              errorMessage = error.response.data.detail;
+            if (error.response.data.old_password) {
+              errorMessage = error.response.data.old_password;
             } else {
               errorMessage =
                 "Solicitação inválida. Verifique os dados e tente novamente.";
