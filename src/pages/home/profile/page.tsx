@@ -2,6 +2,7 @@ import { Layout, Divider, Row, Col } from "antd";
 import RootLayout from "../../../components/layout/root";
 import UserProfileForm from "../../../components/form/auth/profile";
 import UserChangePasswordForm from "../../../components/form/auth/changePassword";
+import ProfilePictureUploader from "../../../components/form/auth/ProfilePictureUploader";
 
 const { Content } = Layout;
 
@@ -10,6 +11,8 @@ const UserPage = () => {
     <RootLayout>
       <Content style={{ padding: "16px 48px" }}>
         <h1>Perfil do Usuário</h1>
+        <Divider />
+        <ProfilePictureUploader />
         <Divider />
         <Row gutter={16}>
           <Col xs={24} sm={24} md={11} lg={11} xl={11}>

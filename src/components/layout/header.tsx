@@ -1,7 +1,8 @@
+import { useContext, useState, useEffect } from "react";
 import { Layout, Button, Avatar, Tooltip, message } from "antd";
 import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import { AuthContext } from "../../contexts/authContext";
-import { useContext } from "react";
+import { api, endpoints } from "../../services/api";
 import styles from "./header.module.css";
 
 const { Header } = Layout;
@@ -9,7 +10,18 @@ const { Header } = Layout;
 const LayoutHeader = () => {
   const authContext = useContext(AuthContext);
   const logout = authContext?.logout;
+  const [profilePictureURL, setProfilePictureURL] = useState("");
+  
+  const getUserProfilePicture = async () => {
+    const response = await api.get(endpoints.profilePicture);
+    setProfilePictureURL(response.data.url);
+  };
 
+  useEffect(() => {
+    getUserProfilePicture()
+
+  }, []);
+  
   return (
     <Header className={styles.header}>
       <a href="/" className={styles.logoContainer}>
@@ -19,7 +31,7 @@ const LayoutHeader = () => {
       <div className={styles.profileSection}>
         <a href="/meu-perfil">
           <Tooltip title="Meu perfil">
-            <Avatar icon={<UserOutlined />} className={styles.avatar} />
+            <Avatar src={profilePictureURL} className={styles.avatar} />
           </Tooltip>
         </a>
         <Button

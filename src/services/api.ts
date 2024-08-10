@@ -12,4 +12,6 @@ export const endpoints = {
   userChangePassword: "/auth/password-change/",
   files: "/files/",
   user: "/user/",
+  profilePicture: "/user/profile_picture/",
+  uploadProfilePicture: import.meta.env.VITE_BASE_URL+"/user/profile_picture/"
 };
