@@ -1,16 +1,7 @@
-import { useRef, useState } from "react";
-import { useQuery, useMutation } from "react-query";
+import React, { useEffect, useState } from "react";
+import { useQuery } from "react-query";
 import { api, endpoints } from "../../../services/api";
-import {
-  Button,
-  Layout,
-  Table,
-  Radio,
-  TableColumnsType,
-  message,
-  Progress,
-  Flex,
-} from "antd";
+import { Button, Layout, Table, Upload, Radio, TableColumnsType } from "antd";
 import RootLayout from "../../../components/layout/root";
 import {
   PictureOutlined,
@@ -23,89 +14,98 @@ import Search from "antd/es/input/Search";
 
 const { Content } = Layout;
 
-type DataType = {
-  key: string;
+interface File {
+  id: number;
   name: string;
-  size: string;
+  size: number;
   upload_date: string;
-  type: string;
-};
+  mime_type: string;
+  description: string;
+  tags: string[];
+  processed: boolean;
+}
 
-const columns: TableColumnsType<DataType> = [
+const columns: TableColumnsType<File> = [
   {
-    title: "Nome do arquivo",
+    title: "Nome",
     dataIndex: "name",
     key: "name",
-    className: "column-name",
-    render: (
-      text:
-        | string
-        | number
-        | boolean
-        | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-        | Iterable<React.ReactNode>
-        | React.ReactPortal
-        | null
-        | undefined,
-      record: { type: string }
-    ) => (
-      <div style={{ display: "flex", alignItems: "center" }}>
-        {record.type === "image" && (
-          <PictureOutlined style={{ color: "red", fontSize: "20px" }} />
-        )}
-        {record.type === "video" && (
-          <VideoCameraOutlined style={{ color: "blue", fontSize: "20px" }} />
-        )}
-        {record.type === "audio" && (
-          <FileOutlined style={{ color: "green", fontSize: "20px" }} />
-        )}
-        <span style={{ marginLeft: "18px" }}>{text}</span>
-      </div>
-    ),
+    // render: (text) => <a>{text}</a>,
+    // renderizar um icone de acordo com o tipo de arquivo (imagem, video, audio, etc)
+    // dar um espaco entre o icone e o nome do arquivo
+    render: (text, record) => {
+      if (record.mime_type.includes("image")) {
+        return (
+          <a href={record.name} target="_blank" rel="noreferrer">
+            <PictureOutlined />
+            <span style={{ marginLeft: '18px' }}>{text}</span>
+          </a>
+        );
+      } else if (record.mime_type.includes("video")) {
+        return (
+          <a href={record.name} target="_blank" rel="noreferrer">
+            <VideoCameraOutlined />
+            <span style={{ marginLeft: '18px' }}>{text}</span>
+          </a>
+        );
+      }
+      return (
+        <a href={record.name} target="_blank" rel="noreferrer">
+          <FileOutlined />
+          <span style={{ marginLeft: '18px' }}>{text}</span>
+        </a>
+      );
+    },
   },
   {
     title: "Tamanho",
     dataIndex: "size",
     key: "size",
-    className: "column-hide",
-    hidden: true,
+    render: (text) => <p>{text}</p>,
   },
   {
-    title: "Data de envio",
+    title: "Data de Upload",
     dataIndex: "upload_date",
     key: "upload_date",
-    className: "column-hide",
-    hidden: true,
+    render: (text) => <p>{text.split("T")[0]}</p>,
   },
-];
-
-const dataSource = [
-  {
-    key: "1",
-    name: "Paisagem.png",
-    size: "1.5 MB",
-    upload_date: "2021-09-01",
-    type: "image",
-  },
-  {
-    key: "2",
-    name: "Festa.mp4",
-    size: "2.5 MB",
-    upload_date: "2021-09-02",
-    type: "video",
-  },
-  {
-    key: "3",
-    name: "Musica.mp3",
-    size: "3.5 MB",
-    upload_date: "2021-09-03",
-    type: "audio",
-  },
+  // {
+  //   title: 'Tipo',
+  //   dataIndex: 'mime_type',
+  //   key: 'mime_type',
+  //   render: (text) => {
+  //     if (text.includes('image')) {
+  //       return <PictureOutlined />;
+  //     } else if (text.includes('video')) {
+  //       return <VideoCameraOutlined />;
+  //     } else {
+  //       return <FileOutlined />;
+  //     }
+  //   },
+  // },
+  // {
+  //   title: 'Descrição',
+  //   dataIndex: 'description',
+  //   key: 'description',
+  //   render: (text) => <p>{text}</p>,
+  // },
+  // {
+  //   title: 'Tags',
+  //   dataIndex: 'tags',
+  //   key: 'tags',
+  //   render: (text) => <p>{text.join(', ')}</p>,
+  // },
+  // {
+  //   title: 'Processado',
+  //   dataIndex: 'processed',
+  //   key: 'processed',
+  //   render: (text) => <p>{text ? 'Sim' : 'Não'}</p>,
+  // },
 ];
 
 const DashboardPage = () => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [percentCompleted, setPercentCompleted] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const { data } = useQuery(
     ["user"],
@@ -116,43 +116,31 @@ const DashboardPage = () => {
     { refetchOnWindowFocus: false }
   );
 
-  const mutation = useMutation(
-    async (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await api.post(endpoints.files, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          // Calcula a porcentagem de upload concluída
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setPercentCompleted(percentCompleted);
-          // Você pode atualizar um estado local aqui se quiser exibir o progresso no UI
-        },
-      });
-      console.log(response);
+  const { data: files, isLoading: loadingFiles } = useQuery(
+    ["files", currentPage, pageSize],
+    async () => {
+      // const response = await api.get(endpoints.files);
+      const response = await api.get(
+        `${endpoints.files}?page=${currentPage}&page_size=${pageSize}`
+      );
+      return response.data;
     },
-    {
-      onSuccess: () => {
-        setPercentCompleted(100)
-        message.success("Arquivo enviado com sucesso!");
-      },
-    }
+    { refetchOnWindowFocus: false }
   );
 
-  const handleFileChange = (event: any) => {
-    const file = event.target.files[0];
-    if (file) {
-      // Chama a mutação para fazer o upload do arquivo
-      mutation.mutate(file);
-    }
+  const handleTableChange = (pagination: any) => {
+    console.log(pagination);
+    setCurrentPage(pagination.current);
+    setPageSize(pagination.pageSize);
   };
 
-  const handleButtonClick = () => {
-    fileInputRef.current?.click(); // Dispara o clique no input de arquivo
-  };
+  useEffect(() => {
+    console.log(files);
+  }, [files]);
+
+  if (loadingFiles) {
+    return <p>Carregando...</p>;
+  }
 
   return (
     <div>
@@ -174,25 +162,22 @@ const DashboardPage = () => {
               <Radio.Button value="videos">Vídeos</Radio.Button>
               <Radio.Button value="audios">Áudios</Radio.Button>
             </Radio.Group>
-            <div className={styles.uploadButtonContainer}>
-              {percentCompleted > 0 && <Progress percent={percentCompleted} size="small" status={percentCompleted < 100 ? "active" : "success"} />}
-              
-              <input
-                type="file"
-                ref={fileInputRef}
-                className={styles.fileInput} // Escondendo o input
-                onChange={handleFileChange}
-              />
-              <Button
-                type="primary"
-                onClick={handleButtonClick}
-                icon={<UploadOutlined />}
-              >
+            <Upload disabled>
+              <Button type="primary" icon={<UploadOutlined />} disabled>
                 Enviar arquivo
               </Button>
-            </div>
+            </Upload>
           </div>
-          <Table dataSource={dataSource} columns={columns} />
+          <Table
+            dataSource={files.results ?? []}
+            columns={columns}
+            onChange={handleTableChange}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: files.count,
+            }}
+          />
         </Content>
       </RootLayout>
     </div>

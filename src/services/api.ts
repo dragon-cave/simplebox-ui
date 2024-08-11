@@ -13,4 +13,5 @@ export const endpoints = {
   files: "/files/",
   user: "/user/",
   profilePicture: "/user/profile_picture/",
+  uploadProfilePicture: import.meta.env.VITE_BASE_URL+"/user/profile_picture/"
 };
