@@ -35,6 +35,8 @@ const DashboardPage = () => {
   const [percentCompleted, setPercentCompleted] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState(""); 
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<number>();
   const [fileToEdit, setFileToEdit] = useState<IFile>();
@@ -51,10 +53,10 @@ const DashboardPage = () => {
   });
 
   const { data: files } = useQuery({
-    queryKey: ["files", currentPage, pageSize],
+    queryKey: ["files", currentPage, pageSize, search, filter],
     queryFn: async () => {
       const response = await api.get(
-        `${endpoints.files}?page=${currentPage}&page_size=${pageSize}`
+        `${endpoints.files}?page=${currentPage}&page_size=${pageSize}&search=${search}&type=${filter}`
       );
       return response.data;
     },
@@ -104,6 +106,7 @@ const DashboardPage = () => {
     },
     onSuccess: () => {
       setPercentCompleted(100);
+      console.log(percentCompleted);
       queryClient.invalidateQueries({ queryKey: ["files"] });
       message.success("Arquivo enviado com sucesso!");
     },
@@ -275,6 +278,18 @@ const DashboardPage = () => {
     setEditModalVisible(true);
   };
 
+  const handleSearch = (value: string, _e: any, info: any) => {
+    console.log(info?.source, value);
+    setSearch(value);
+    queryClient.invalidateQueries({ queryKey: ["files"] });
+  };
+
+  const handleFilterChange = (e: any) =>{
+    setFilter(e.target.value);
+    console.log('Valor selecionado:', e.target.value);
+    queryClient.invalidateQueries({ queryKey: ["files"] });
+  };
+
   return (
     <div>
       <Modal
@@ -328,17 +343,16 @@ const DashboardPage = () => {
           <p style={{ fontSize: "18px" }}>Bem vindo, {data?.username}!</p>
           <Search
             placeholder="Pesquisar no SimpleBox"
-            onSearch={(value, _e, info) => console.log(info?.source, value)}
+            onSearch={handleSearch}
             enterButton
             style={{ marginBottom: 8 }}
-            disabled
           />
           <div className={styles.flexContainer}>
-            <Radio.Group value="all" disabled>
-              <Radio.Button value="all">Todos</Radio.Button>
-              <Radio.Button value="photos">Fotos</Radio.Button>
-              <Radio.Button value="videos">Vídeos</Radio.Button>
-              <Radio.Button value="audios">Áudios</Radio.Button>
+            <Radio.Group value={filter} onChange={handleFilterChange}>
+              <Radio.Button value="">Todos</Radio.Button>
+              <Radio.Button value="image">Fotos</Radio.Button>
+              <Radio.Button value="video">Vídeos</Radio.Button>
+              <Radio.Button value="audio">Áudios</Radio.Button>
             </Radio.Group>
             <div className={styles.uploadButtonContainer}>
               {percentCompleted > 0 && (
