@@ -4,6 +4,7 @@ import UserProfileForm from "../../../components/form/auth/profile";
 import UserChangePasswordForm from "../../../components/form/auth/changePassword";
 import ProfilePictureUploader from "../../../components/form/auth/ProfilePictureUploader";
 
+
 const { Content } = Layout;
 
 const UserPage = () => {
