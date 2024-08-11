@@ -4,8 +4,6 @@ import { Form, Input, Button, Row, Col, message } from "antd";
 import { api, endpoints } from "../../../services/api";
 import { useMutation } from '@tanstack/react-query'
 
-// import ProfilePictureUploader from "./ProfilePictureUploader";
-
 const UserProfileForm = ({title}: {title: string}) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);

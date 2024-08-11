@@ -29,7 +29,7 @@ interface File {
   upload_date: string;
   mime_type: string;
   description: string;
-  tags: string;
+  tags: string[];
   processed: boolean;
   url: string;
   thumbnail_url: string;
@@ -229,13 +229,19 @@ const DashboardPage = () => {
     },
   ];
 
-  const handleOkEdit = (values: any) => {
+  const handleOkEdit = async (values: any) => {
     if (fileToEdit) {
-      editFile(fileToEdit.id, values);
+      try {
+        await editFile(fileToEdit.id, values);
+        message.success("Arquivo editado com sucesso!");
+        setEditModalVisible(false);
+        queryClient.invalidateQueries({ queryKey: ["files"] }); // Recarrega os arquivos
+      } catch (error) {
+        message.error("Falha ao editar arquivo");
+      }
     }
-    setEditModalVisible(false);
   };
-
+  
   const handleCancelEdit = () => {
     setEditModalVisible(false);
     setFileToEdit(undefined);
