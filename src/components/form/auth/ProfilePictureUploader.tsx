@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Upload, Avatar, Button } from "antd";
-import { UploadOutlined, UserOutlined } from "@ant-design/icons";
+import { UploadOutlined } from "@ant-design/icons";
 import { api, endpoints } from "../../../services/api";
 
 import styles from "./styles/profilePictureUploader.module.css";
@@ -37,13 +37,13 @@ const ProfilePictureUploader = () => {
         },
         onUploadProgress: (event) => {
           if (onProgress) {
-            onProgress({ percent: (event.loaded / event.total) * 100 });
+            onProgress({ percent: (event.loaded / (event.total ?? 1)) * 100 });
           }
         },
       });
 
       if (onSuccess) {
-        onSuccess(response.data, file);
+        onSuccess(response.data);
       }
     } catch (error) {
       if (onError) {
