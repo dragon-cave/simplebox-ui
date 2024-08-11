@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useQuery } from "react-query";
+import { useRef, useEffect, useState } from "react";
+import { useQuery, useMutation } from "react-query";
 import { api, endpoints } from "../../../services/api";
-import { Button, Layout, Table, Upload, Radio, TableColumnsType } from "antd";
+import { Button, Layout, Table, Radio, TableColumnsType, message, Progress } from "antd";
 import RootLayout from "../../../components/layout/root";
 import {
   PictureOutlined,
@@ -69,41 +69,11 @@ const columns: TableColumnsType<File> = [
     key: "upload_date",
     render: (text) => <p>{text.split("T")[0]}</p>,
   },
-  // {
-  //   title: 'Tipo',
-  //   dataIndex: 'mime_type',
-  //   key: 'mime_type',
-  //   render: (text) => {
-  //     if (text.includes('image')) {
-  //       return <PictureOutlined />;
-  //     } else if (text.includes('video')) {
-  //       return <VideoCameraOutlined />;
-  //     } else {
-  //       return <FileOutlined />;
-  //     }
-  //   },
-  // },
-  // {
-  //   title: 'Descrição',
-  //   dataIndex: 'description',
-  //   key: 'description',
-  //   render: (text) => <p>{text}</p>,
-  // },
-  // {
-  //   title: 'Tags',
-  //   dataIndex: 'tags',
-  //   key: 'tags',
-  //   render: (text) => <p>{text.join(', ')}</p>,
-  // },
-  // {
-  //   title: 'Processado',
-  //   dataIndex: 'processed',
-  //   key: 'processed',
-  //   render: (text) => <p>{text ? 'Sim' : 'Não'}</p>,
-  // },
 ];
 
 const DashboardPage = () => {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [percentCompleted, setPercentCompleted] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -123,6 +93,7 @@ const DashboardPage = () => {
       const response = await api.get(
         `${endpoints.files}?page=${currentPage}&page_size=${pageSize}`
       );
+      console.log(response.data);
       return response.data;
     },
     { refetchOnWindowFocus: false }
@@ -134,13 +105,45 @@ const DashboardPage = () => {
     setPageSize(pagination.pageSize);
   };
 
-  useEffect(() => {
-    console.log(files);
-  }, [files]);
 
-  if (loadingFiles) {
-    return <p>Carregando...</p>;
-  }
+  const mutation = useMutation(
+    async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await api.post(endpoints.files, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          // Calcula a porcentagem de upload concluída
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setPercentCompleted(percentCompleted);
+          // Você pode atualizar um estado local aqui se quiser exibir o progresso no UI
+        },
+      });
+      console.log(response);
+    },
+    {
+      onSuccess: () => {
+        setPercentCompleted(100)
+        message.success("Arquivo enviado com sucesso!");
+      },
+    }
+  );
+
+  const handleFileChange = (event: any) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Chama a mutação para fazer o upload do arquivo
+      mutation.mutate(file);
+    }
+  };
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click(); // Dispara o clique no input de arquivo
+  };
+
 
   return (
     <div>
@@ -162,21 +165,34 @@ const DashboardPage = () => {
               <Radio.Button value="videos">Vídeos</Radio.Button>
               <Radio.Button value="audios">Áudios</Radio.Button>
             </Radio.Group>
-            <Upload disabled>
-              <Button type="primary" icon={<UploadOutlined />} disabled>
+            <div className={styles.uploadButtonContainer}>
+              {percentCompleted > 0 && <Progress percent={percentCompleted} size="small" status={percentCompleted < 100 ? "active" : "success"} />}
+              
+              <input
+                type="file"
+                ref={fileInputRef}
+                className={styles.fileInput} // Escondendo o input
+                onChange={handleFileChange}
+              />
+              <Button
+                type="primary"
+                onClick={handleButtonClick}
+                icon={<UploadOutlined />}
+              >
                 Enviar arquivo
               </Button>
-            </Upload>
+            </div>
           </div>
           <Table
-            dataSource={files.results ?? []}
+            dataSource={files?.results}
             columns={columns}
             onChange={handleTableChange}
             pagination={{
               current: currentPage,
               pageSize: pageSize,
-              total: files.count,
+              total: files?.count,
             }}
+            rowKey="id"
           />
         </Content>
       </RootLayout>

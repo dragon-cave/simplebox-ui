@@ -27,3 +27,18 @@
     display: none;
   }
 }
+
+.fileInput {
+  display: none;
+}
+
+.uploadButtonContainer{
+  flex-grow: 0.5;
+  max-width: 300px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+
