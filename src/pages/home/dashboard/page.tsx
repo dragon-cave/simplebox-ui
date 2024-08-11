@@ -1,17 +1,25 @@
-import { useRef, useEffect, useState } from "react";
-import { useQuery, useMutation } from "react-query";
+import { useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, endpoints } from "../../../services/api";
-import { Button, Layout, Table, Radio, TableColumnsType, message, Progress } from "antd";
+import {
+  Button,
+  Layout,
+  Table,
+  Radio,
+  TableColumnsType,
+  message,
+  Progress,
+  Modal,
+} from "antd";
 import RootLayout from "../../../components/layout/root";
 import {
-  PictureOutlined,
-  FileOutlined,
-  VideoCameraOutlined,
   UploadOutlined,
+  LoadingOutlined,
+  SpotifyOutlined,
 } from "@ant-design/icons";
 import styles from "./style.module.css";
 import Search from "antd/es/input/Search";
-
+import { FileForm } from "../../../components/form/file/fileForm";
 const { Content } = Layout;
 
 interface File {
@@ -21,93 +29,67 @@ interface File {
   upload_date: string;
   mime_type: string;
   description: string;
-  tags: string[];
+  tags: string;
   processed: boolean;
+  url: string;
+  thumbnail_url: string;
 }
 
-const columns: TableColumnsType<File> = [
-  {
-    title: "Nome",
-    dataIndex: "name",
-    key: "name",
-    // render: (text) => <a>{text}</a>,
-    // renderizar um icone de acordo com o tipo de arquivo (imagem, video, audio, etc)
-    // dar um espaco entre o icone e o nome do arquivo
-    render: (text, record) => {
-      if (record.mime_type.includes("image")) {
-        return (
-          <a href={record.name} target="_blank" rel="noreferrer">
-            <PictureOutlined />
-            <span style={{ marginLeft: '18px' }}>{text}</span>
-          </a>
-        );
-      } else if (record.mime_type.includes("video")) {
-        return (
-          <a href={record.name} target="_blank" rel="noreferrer">
-            <VideoCameraOutlined />
-            <span style={{ marginLeft: '18px' }}>{text}</span>
-          </a>
-        );
-      }
-      return (
-        <a href={record.name} target="_blank" rel="noreferrer">
-          <FileOutlined />
-          <span style={{ marginLeft: '18px' }}>{text}</span>
-        </a>
-      );
-    },
-  },
-  {
-    title: "Tamanho",
-    dataIndex: "size",
-    key: "size",
-    render: (text) => <p>{text}</p>,
-  },
-  {
-    title: "Data de Upload",
-    dataIndex: "upload_date",
-    key: "upload_date",
-    render: (text) => <p>{text.split("T")[0]}</p>,
-  },
-];
-
 const DashboardPage = () => {
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [percentCompleted, setPercentCompleted] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<number>();
+  const [fileToEdit, setFileToEdit] = useState<File>();
+  const [editModalVisible, setEditModalVisible] = useState(false);
 
-  const { data } = useQuery(
-    ["user"],
-    async () => {
+  const { data } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
       const response = await api.get(endpoints.user);
       return response.data;
     },
-    { refetchOnWindowFocus: false }
-  );
+  });
 
-  const { data: files, isLoading: loadingFiles } = useQuery(
-    ["files", currentPage, pageSize],
-    async () => {
-      // const response = await api.get(endpoints.files);
+  const { data: files } = useQuery({
+    queryKey: ["files", currentPage, pageSize],
+    queryFn: async () => {
       const response = await api.get(
         `${endpoints.files}?page=${currentPage}&page_size=${pageSize}`
       );
-      console.log(response.data);
       return response.data;
     },
-    { refetchOnWindowFocus: false }
-  );
+  });
 
   const handleTableChange = (pagination: any) => {
-    console.log(pagination);
     setCurrentPage(pagination.current);
     setPageSize(pagination.pageSize);
   };
 
+  const deleteFile = async (id: number) => {
+    try {
+      await api.delete(`${endpoints.files}${id}/`);
+      queryClient.invalidateQueries({ queryKey: ["files"] });
+      message.success("Arquivo deletado com sucesso!");
+    } catch (error) {
+      message.error("Falha ao deletar arquivo");
+    }
+  };
 
-  const mutation = useMutation(
-    async (file: File) => {
+  const editFile = async (id: number, values: any) => {
+    try {
+      await api.patch(`${endpoints.files}${id}/`, values);
+      queryClient.invalidateQueries({ queryKey: ["files"] });
+    } catch (error) {
+      message.error("Falha ao editar arquivo");
+    }
+  }
+
+  const mutation = useMutation({
+    mutationFn: async (file: Blob) => {
       const formData = new FormData();
       formData.append("file", file);
 
@@ -116,37 +98,183 @@ const DashboardPage = () => {
           "Content-Type": "multipart/form-data",
         },
         onUploadProgress: (progressEvent) => {
-          // Calcula a porcentagem de upload concluída
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          const percentCompleted = progressEvent.total
+            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            : 0;
           setPercentCompleted(percentCompleted);
-          // Você pode atualizar um estado local aqui se quiser exibir o progresso no UI
         },
       });
-      console.log(response);
+      return response.data;
     },
-    {
-      onSuccess: () => {
-        setPercentCompleted(100)
-        message.success("Arquivo enviado com sucesso!");
-      },
-    }
-  );
+    onSuccess: () => {
+      setPercentCompleted(100);
+      queryClient.invalidateQueries({ queryKey: ["files"] });
+      message.success("Arquivo enviado com sucesso!");
+    },
+  });
 
   const handleFileChange = (event: any) => {
     const file = event.target.files[0];
     if (file) {
-      // Chama a mutação para fazer o upload do arquivo
       mutation.mutate(file);
     }
   };
 
   const handleButtonClick = () => {
-    fileInputRef.current?.click(); // Dispara o clique no input de arquivo
+    fileInputRef.current?.click();
   };
 
+  const handleDeleteClick = (id: number) => {
+    setFileToDelete(id);
+    setConfirmDeleteModal(true);
+  };
+
+  const handleOk = () => {
+    if (fileToDelete !== null) {
+      deleteFile(fileToDelete as number);
+    }
+    setConfirmDeleteModal(false);
+  };
+
+  const handleCancel = () => {
+    setConfirmDeleteModal(false);
+    setFileToDelete(undefined);
+  };
+
+  const formatFileSize = (sizeInBytes: number): string => {
+    if (sizeInBytes < 1024) {
+      return `${sizeInBytes} Bytes`;
+    } else if (sizeInBytes < 1024 * 1024) {
+      return `${(sizeInBytes / 1024).toFixed(2)} KB`;
+    } else if (sizeInBytes < 1024 * 1024 * 1024) {
+      return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
+    } else if (sizeInBytes < 1024 * 1024 * 1024 * 1024) {
+      return `${(sizeInBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    } else {
+      return `${(sizeInBytes / (1024 * 1024 * 1024 * 1024)).toFixed(2)} TB`;
+    }
+  };
+
+  const columns: TableColumnsType<File> = [
+    {
+      title: "Pre-visualização",
+      dataIndex: "url",
+      key: "url",
+      render: (_text, record) => {
+        if (!record.processed) {
+          return <LoadingOutlined />;
+        }
+        if (
+          record.mime_type.includes("image") ||
+          record.mime_type.includes("video")
+        ) {
+          return (
+            <img
+              src={record.thumbnail_url}
+              alt={record.name}
+              style={{ width: "100px" }}
+            />
+          );
+        } else if (record.mime_type.includes("audio")) {
+          return <SpotifyOutlined />;
+        }
+        return null;
+      },
+    },
+    {
+      title: "Nome",
+      dataIndex: "name",
+      key: "name",
+      render: (text, record) => {
+        return <a href={record.url}>{text}</a>;
+      },
+    },
+    {
+      title: "Tamanho",
+      dataIndex: "size",
+      key: "size",
+      render: (text) => {
+        const size = Number(text);
+        return <p>{formatFileSize(size)}</p>;
+      },
+    },
+    {
+      title: "Data de Upload",
+      dataIndex: "upload_date",
+      key: "upload_date",
+      render: (text) => <p>{text.split("T")[0]}</p>,
+    },
+    {
+      title: "Ações",
+      key: "actions",
+      render: (record) => (
+        <div>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => handleEditClick(record.id)}
+          >
+            Editar
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            style={{ color: "red" }}
+            onClick={() => handleDeleteClick(record.id)}
+          >
+            Deletar
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const handleOkEdit = (values: any) => {
+    if (fileToEdit) {
+      editFile(fileToEdit.id, values);
+    }
+    setEditModalVisible(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditModalVisible(false);
+    setFileToEdit(undefined);
+  };
+
+  const handleEditClick = (id: number) => {
+    setFileToEdit(
+      files?.results.find((file: { id: number }) => file.id === id)
+    );
+    setEditModalVisible(true);
+  };
 
   return (
     <div>
+      <Modal
+        title="Confirmação de exclusão"
+        open={confirmDeleteModal}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Deletar"
+        cancelText="Cancelar"
+      >
+        <p>Tem certeza que deseja excluir o arquivo?</p>
+      </Modal>
+      <Modal
+        title={`Editar ${fileToEdit?.name}`}
+        open={editModalVisible}
+        onCancel={handleCancelEdit}
+        footer={null} // Removendo o footer padrão para usar o submit do form
+      >
+        <FileForm
+          onSubmit={handleOkEdit}
+          initialValues={
+            fileToEdit
+              ? { description: fileToEdit.description, tags: fileToEdit.tags }
+              : {}
+          }
+        />
+      </Modal>
       <RootLayout>
         <Content className={styles.dashboardContent}>
           <h1>Dashboard</h1>
@@ -166,8 +294,14 @@ const DashboardPage = () => {
               <Radio.Button value="audios">Áudios</Radio.Button>
             </Radio.Group>
             <div className={styles.uploadButtonContainer}>
-              {percentCompleted > 0 && <Progress percent={percentCompleted} size="small" status={percentCompleted < 100 ? "active" : "success"} />}
-              
+              {percentCompleted > 0 && (
+                <Progress
+                  percent={percentCompleted}
+                  size="small"
+                  status={percentCompleted < 100 ? "active" : "success"}
+                />
+              )}
+
               <input
                 type="file"
                 ref={fileInputRef}

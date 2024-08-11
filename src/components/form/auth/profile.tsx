@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Form, Input, Button, Row, Col, message } from "antd";
 import { api, endpoints } from "../../../services/api";
-import { useMutation } from "react-query";
+import { useMutation } from '@tanstack/react-query'
 
 // import ProfilePictureUploader from "./ProfilePictureUploader";
 
@@ -22,23 +22,21 @@ const UserProfileForm = ({title}: {title: string}) => {
     getUser();
   }, []);
 
-  const mutation = useMutation(
-    async (values) => {
+  const mutation = useMutation({
+    mutationFn: async (values: any) => {
       setLoading(true);
       const response = await api.patch(endpoints.user, values);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       setLoading(false);
       return response.data;
     },
-    {
-      onSuccess: () => {
-        message.success("Perfil atualizado com sucesso!");
-      },
-      onError: () => {
-        message.error("Falha ao atualizar perfil!");
-      },
-    }
-  );
+    onSuccess: () => {
+      message.success("Perfil atualizado com sucesso!");
+    },
+    onError: () => {
+      message.error("Falha ao atualizar perfil!");
+    },
+  });
 
   const onFinish = async (values: void) => {
     await mutation.mutateAsync(values);
