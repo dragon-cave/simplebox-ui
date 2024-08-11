@@ -6,7 +6,7 @@ import { useMutation } from "react-query";
 
 // import ProfilePictureUploader from "./ProfilePictureUploader";
 
-const UserProfileForm = ({title}: {title: string}) => {
+const UserProfileForm = ({ title }: { title: string }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
@@ -45,7 +45,7 @@ const UserProfileForm = ({title}: {title: string}) => {
   };
 
   return (
-    <div >
+    <div>
       <h1>{title}</h1>
       <Form
         form={form}
@@ -53,7 +53,9 @@ const UserProfileForm = ({title}: {title: string}) => {
         layout="vertical"
         disabled={loading}
         onFinish={onFinish}
-        onFieldsChange={() => {setIsChanged(true)}}
+        onFieldsChange={() => {
+          setIsChanged(true);
+        }}
       >
         <Row gutter={16}>
           <Col xs={24} sm={24} md={12}>
@@ -72,7 +74,10 @@ const UserProfileForm = ({title}: {title: string}) => {
               name="full_name"
               label="Nome Completo"
               rules={[
-                { required: false, message: "Por favor, insira seu nome completo." },
+                {
+                  required: false,
+                  message: "Por favor, insira seu nome completo.",
+                },
               ]}
             >
               <Input />
@@ -85,7 +90,12 @@ const UserProfileForm = ({title}: {title: string}) => {
             <Form.Item
               name="description"
               label="Descrição"
-              rules={[{ required: false, message: "Por favor, insira uma descrição." }]}
+              rules={[
+                {
+                  required: false,
+                  message: "Por favor, insira uma descrição.",
+                },
+              ]}
             >
               <Input />
             </Form.Item>
@@ -94,7 +104,9 @@ const UserProfileForm = ({title}: {title: string}) => {
             <Form.Item
               name="email"
               label="Email"
-              rules={[{ required: false, message: "Por favor, insira seu email" }]}
+              rules={[
+                { required: false, message: "Por favor, insira seu email" },
+              ]}
             >
               <Input disabled />
             </Form.Item>
@@ -102,11 +114,15 @@ const UserProfileForm = ({title}: {title: string}) => {
         </Row>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" disabled={loading || !isChanged }>
+          <Button
+            type="primary"
+            htmlType="submit"
+            disabled={loading || !isChanged}
+          >
             Atualizar Perfil
           </Button>
         </Form.Item>
-      </Form> 
+      </Form>
     </div>
   );
 };
