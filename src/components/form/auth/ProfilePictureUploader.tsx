@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Upload, Avatar, Button } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { api, endpoints } from "../../../services/api";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 
 import styles from "./styles/profilePictureUploader.module.css";
 
@@ -11,59 +12,70 @@ import type {
 } from "rc-upload/lib/interface";
 
 const ProfilePictureUploader = () => {
-  const [uploading, setUploading] = useState(false);
-  const [profilePictureURL, setProfilePictureURL] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const queryClient = useQueryClient();
 
-  const getUserProfilePicture = async () => {
-    const response = await api.get(endpoints.profilePicture);
-    setProfilePictureURL(response.data.url);
-  };
+  const { data: pictureURL } = useQuery(
+    ["profilePicture"],
+    async () => {
+      const response = await api.get(endpoints.profilePicture);
+      return response.data.url;
+    },
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutos
+      cacheTime: 1000 * 60 * 10, // 10 minutos
+    }
+  );
 
-  useEffect(() => {
-    getUserProfilePicture();
-  });
+  const mutation = useMutation(
+    async (file: File) => {
+      const formData = new FormData();
+      formData.append("picture", file);
 
-  const handleUpload = async (options: RcCustomRequestOptions) => {
-    const { onSuccess, onError, file, onProgress } = options;
-
-    const formData = new FormData();
-    formData.append("picture", file as RcFile);
-    setUploading(true);
-
-    try {
       const response = await api.post(endpoints.profilePicture, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        onUploadProgress: (event) => {
-          if (onProgress) {
-            onProgress({ percent: (event.loaded / (event.total ?? 1)) * 100 });
-          }
-        },
       });
+      console.log(response);
+    },
+    {
+      onSuccess: (data) => {
+        console.log("Mutação bem-sucedida!", data);
 
-      if (onSuccess) {
-        onSuccess(response.data);
-      }
-    } catch (error) {
-      if (onError) {
-        onError(error as Error);
-      }
+        // Atualize o cache da query, se necessário
+        queryClient.resetQueries(["profilePicture"]);
+      },
     }
-    finally {
-      setUploading(false);
-      getUserProfilePicture();
+  );
+
+  const handleFileChange = (event: any) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Chama a mutação para fazer o upload do arquivo
+      mutation.mutate(file);
     }
+  };
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click(); // Dispara o clique no input de arquivo
   };
 
   return (
     <div className={styles.container}>
       <h1>{"Alterar foto de perfil"}</h1>
       <div className={styles.pictureAndButton}>
-        <Avatar size={128} src={profilePictureURL} />
-        <Upload customRequest={handleUpload} showUploadList={false}>
-          <Button loading={uploading} icon={<UploadOutlined />}>Trocar foto de perfil</Button>
-        </Upload>
+        <Avatar size={128} src={pictureURL} />
+        <input
+          type="file"
+          ref={fileInputRef}
+          className={styles.fileInput} // Escondendo o input
+          onChange={handleFileChange}
+        />
+        <Button type="primary" onClick={handleButtonClick} icon={<UploadOutlined />}>
+          Trocar foto de perfil
+        </Button>
       </div>
     </div>
   );
