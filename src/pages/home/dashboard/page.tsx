@@ -15,25 +15,19 @@ import RootLayout from "../../../components/layout/root";
 import {
   UploadOutlined,
   LoadingOutlined,
-  SpotifyOutlined,
+  SoundOutlined,
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import styles from "./style.module.css";
 import Search from "antd/es/input/Search";
 import { FileForm } from "../../../components/form/file/fileForm";
+import { IFile } from "../../../types/IFiles";
+import { FileInfo } from "../../../components/form/file/fileInfo";
 const { Content } = Layout;
 
-interface File {
-  id: number;
-  name: string;
-  size: number;
-  upload_date: string;
-  mime_type: string;
-  description: string;
-  tags: string[];
-  processed: boolean;
-  url: string;
-  thumbnail_url: string;
-}
+
 
 const DashboardPage = () => {
   const queryClient = useQueryClient();
@@ -43,8 +37,10 @@ const DashboardPage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<number>();
-  const [fileToEdit, setFileToEdit] = useState<File>();
+  const [fileToEdit, setFileToEdit] = useState<IFile>();
+  const [fileSelected, setFileSelected] = useState<IFile>();
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["user"],
@@ -86,7 +82,7 @@ const DashboardPage = () => {
     } catch (error) {
       message.error("Falha ao editar arquivo");
     }
-  }
+  };
 
   const mutation = useMutation({
     mutationFn: async (file: Blob) => {
@@ -155,28 +151,39 @@ const DashboardPage = () => {
     }
   };
 
-  const columns: TableColumnsType<File> = [
+  const columns: TableColumnsType<IFile> = [
     {
       title: "Pre-visualização",
       dataIndex: "url",
       key: "url",
+      width: "15%",
       render: (_text, record) => {
         if (!record.processed) {
-          return <LoadingOutlined />;
+          return (
+            <div className={styles.centerIcon}>
+              <LoadingOutlined style={{ fontSize: "25px" }} />
+            </div>
+          );
         }
         if (
           record.mime_type.includes("image") ||
           record.mime_type.includes("video")
         ) {
           return (
-            <img
-              src={record.thumbnail_url}
-              alt={record.name}
-              style={{ width: "100px" }}
-            />
+            <div className={styles.centerIcon}>
+              <img
+                src={record.thumbnail_url}
+                alt={record.name}
+                style={{ width: "100px" }}
+              />
+            </div>
           );
         } else if (record.mime_type.includes("audio")) {
-          return <SpotifyOutlined />;
+          return (
+            <div className={styles.centerIcon}>
+              <SoundOutlined style={{ fontSize: "25px" }} />
+            </div>
+          );
         }
         return null;
       },
@@ -185,8 +192,9 @@ const DashboardPage = () => {
       title: "Nome",
       dataIndex: "name",
       key: "name",
+      width: "25%",
       render: (text, record) => {
-        return <a href={record.url}>{text}</a>;
+        return <p>{text}</p>;
       },
     },
     {
@@ -207,14 +215,27 @@ const DashboardPage = () => {
     {
       title: "Ações",
       key: "actions",
+      width: "15%",
       render: (record) => (
         <div>
           <Button
             type="link"
             size="small"
+            style={{ color: "black" }}
+            onClick={() => {
+              setFileSelected(record);
+              setViewModalVisible(true);
+            }}
+          >
+            {/* Visualizar */}
+            <EyeOutlined />
+          </Button>
+          <Button
+            type="link"
+            size="small"
             onClick={() => handleEditClick(record.id)}
           >
-            Editar
+            <EditOutlined />
           </Button>
           <Button
             type="link"
@@ -222,7 +243,7 @@ const DashboardPage = () => {
             style={{ color: "red" }}
             onClick={() => handleDeleteClick(record.id)}
           >
-            Deletar
+            <DeleteOutlined />
           </Button>
         </div>
       ),
@@ -241,7 +262,7 @@ const DashboardPage = () => {
       }
     }
   };
-  
+
   const handleCancelEdit = () => {
     setEditModalVisible(false);
     setFileToEdit(undefined);
@@ -280,6 +301,26 @@ const DashboardPage = () => {
               : {}
           }
         />
+      </Modal>
+      <Modal
+        title="Visualização"
+        open={viewModalVisible}
+        onCancel={() => setViewModalVisible(false)}
+      >
+        {fileSelected?.mime_type.includes("image") && (
+          <img
+            src={fileSelected?.url}
+            alt={fileSelected?.name}
+            style={{ width: "100%" }}
+          />
+        )}
+        {fileSelected?.mime_type.includes("video") && (
+          <video src={fileSelected?.url} controls style={{ width: "100%" }} />
+        )}
+        {fileSelected?.mime_type.includes("audio") && (
+          <audio src={fileSelected?.url} controls />
+        )}
+        <FileInfo file={fileSelected as IFile} />
       </Modal>
       <RootLayout>
         <Content className={styles.dashboardContent}>
