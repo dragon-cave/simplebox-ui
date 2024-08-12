@@ -4,24 +4,24 @@ import { LogoutOutlined } from "@ant-design/icons";
 import { AuthContext } from "../../contexts/authContext";
 import { api, endpoints } from "../../services/api";
 import styles from "./header.module.css";
+import { useQuery } from "@tanstack/react-query";
 
 const { Header } = Layout;
 
 const LayoutHeader = () => {
   const authContext = useContext(AuthContext);
   const logout = authContext?.logout;
-  const [profilePictureURL, setProfilePictureURL] = useState("");
-  
-  const getUserProfilePicture = async () => {
-    const response = await api.get(endpoints.profilePicture);
-    setProfilePictureURL(response.data.url);
-  };
 
-  useEffect(() => {
-    getUserProfilePicture()
+  const { data: pictureURL } = useQuery({
+    queryKey: ["profilePicture"],
+    queryFn: async () => {
+      const response = await api.get(endpoints.profilePicture);
+      return response.data.url;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  }, []);
-  
   return (
     <Header className={styles.header}>
       <a href="/" className={styles.logoContainer}>
@@ -31,7 +31,7 @@ const LayoutHeader = () => {
       <div className={styles.profileSection}>
         <a href="/meu-perfil">
           <Tooltip title="Meu perfil">
-            <Avatar src={profilePictureURL} className={styles.avatar} />
+            <Avatar src={pictureURL} className={styles.avatar} />
           </Tooltip>
         </a>
         <Button
