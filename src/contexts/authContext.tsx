@@ -30,7 +30,6 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLogged, setIsLogged] = useState<boolean>(false);
   const [isVerified, setIsVerified] = useState<boolean>(false);
-  // const [isExpired, setIsExpired] = useState<boolean>(false);
 
   function isJwtExpired(token: string): boolean {
     try {
@@ -56,8 +55,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       return currentTime >= exp;
     } catch (error: any) {
-      // console.error("Invalid JWT:", error.message);
-      // setIsExpired(true);
       return true;
     }
   }

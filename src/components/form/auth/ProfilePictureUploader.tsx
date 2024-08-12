@@ -26,15 +26,13 @@ const ProfilePictureUploader = () => {
       const formData = new FormData();
       formData.append("picture", file);
 
-      const response = await api.post(endpoints.profilePicture, formData, {
+      await api.post(endpoints.profilePicture, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      // console.log(response);
     },
-      onSuccess: (data) => {
-        // console.log("Mutação bem-sucedida!", data);
+      onSuccess: () => {
         queryClient.invalidateQueries({queryKey: ["profilePicture"]});
       },
 
