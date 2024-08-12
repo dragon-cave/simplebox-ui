@@ -19,6 +19,7 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import styles from "./style.module.css";
 import Search from "antd/es/input/Search";
@@ -248,6 +249,12 @@ const DashboardPage = () => {
             onClick={() => handleDeleteClick(record.id)}
           >
             <DeleteOutlined />
+          </Button>
+          {/* donwload */}
+          <Button type="link" size="small">
+            <a href={record.url} download={record.name}>
+              <DownloadOutlined />
+            </a>
           </Button>
         </div>
       ),
