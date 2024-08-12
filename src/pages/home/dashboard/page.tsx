@@ -331,6 +331,10 @@ const DashboardPage = () => {
           setViewModalVisible(false);
           setVideoQuality("480p");
         }}
+        onOk={() => {
+          setViewModalVisible(false);
+          setVideoQuality("480p");
+        }}
       >
         {fileSelected?.mime_type.includes("image") && (
           <img
