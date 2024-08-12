@@ -15,25 +15,19 @@ import RootLayout from "../../../components/layout/root";
 import {
   UploadOutlined,
   LoadingOutlined,
-  SpotifyOutlined,
+  SoundOutlined,
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import styles from "./style.module.css";
 import Search from "antd/es/input/Search";
 import { FileForm } from "../../../components/form/file/fileForm";
+import { IFile } from "../../../types/IFiles";
+import { FileInfo } from "../../../components/form/file/fileInfo";
+import { formatFileSize } from "../../../utils/formatSize";
 const { Content } = Layout;
-
-interface File {
-  id: number;
-  name: string;
-  size: number;
-  upload_date: string;
-  mime_type: string;
-  description: string;
-  tags: string[];
-  processed: boolean;
-  url: string;
-  thumbnail_url: string;
-}
 
 const DashboardPage = () => {
   const queryClient = useQueryClient();
@@ -41,10 +35,15 @@ const DashboardPage = () => {
   const [percentCompleted, setPercentCompleted] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("");
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<number>();
-  const [fileToEdit, setFileToEdit] = useState<File>();
+  const [fileToEdit, setFileToEdit] = useState<IFile>();
+  const [fileSelected, setFileSelected] = useState<IFile>();
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [videoQuality, setVideoQuality] = useState<string>();
 
   const { data } = useQuery({
     queryKey: ["user"],
@@ -55,10 +54,10 @@ const DashboardPage = () => {
   });
 
   const { data: files } = useQuery({
-    queryKey: ["files", currentPage, pageSize],
+    queryKey: ["files", currentPage, pageSize, search, filter],
     queryFn: async () => {
       const response = await api.get(
-        `${endpoints.files}?page=${currentPage}&page_size=${pageSize}`
+        `${endpoints.files}?page=${currentPage}&page_size=${pageSize}&search=${search}&type=${filter}`
       );
       return response.data;
     },
@@ -86,7 +85,7 @@ const DashboardPage = () => {
     } catch (error) {
       message.error("Falha ao editar arquivo");
     }
-  }
+  };
 
   const mutation = useMutation({
     mutationFn: async (file: Blob) => {
@@ -108,6 +107,7 @@ const DashboardPage = () => {
     },
     onSuccess: () => {
       setPercentCompleted(100);
+      // console.log(percentCompleted);
       queryClient.invalidateQueries({ queryKey: ["files"] });
       message.success("Arquivo enviado com sucesso!");
     },
@@ -141,42 +141,43 @@ const DashboardPage = () => {
     setFileToDelete(undefined);
   };
 
-  const formatFileSize = (sizeInBytes: number): string => {
-    if (sizeInBytes < 1024) {
-      return `${sizeInBytes} Bytes`;
-    } else if (sizeInBytes < 1024 * 1024) {
-      return `${(sizeInBytes / 1024).toFixed(2)} KB`;
-    } else if (sizeInBytes < 1024 * 1024 * 1024) {
-      return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
-    } else if (sizeInBytes < 1024 * 1024 * 1024 * 1024) {
-      return `${(sizeInBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-    } else {
-      return `${(sizeInBytes / (1024 * 1024 * 1024 * 1024)).toFixed(2)} TB`;
-    }
+  const handleQualityChange = (e: any) => {
+    setVideoQuality(e.target.value);
   };
 
-  const columns: TableColumnsType<File> = [
+  const columns: TableColumnsType<IFile> = [
     {
       title: "Pre-visualização",
       dataIndex: "url",
       key: "url",
+      width: "15%",
       render: (_text, record) => {
         if (!record.processed) {
-          return <LoadingOutlined />;
+          return (
+            <div className={styles.centerIcon}>
+              <LoadingOutlined style={{ fontSize: "25px" }} />
+            </div>
+          );
         }
         if (
           record.mime_type.includes("image") ||
           record.mime_type.includes("video")
         ) {
           return (
-            <img
-              src={record.thumbnail_url}
-              alt={record.name}
-              style={{ width: "100px" }}
-            />
+            <div className={styles.centerIcon}>
+              <img
+                src={record.thumbnail_url}
+                alt={record.name}
+                style={{ width: "100px" }}
+              />
+            </div>
           );
         } else if (record.mime_type.includes("audio")) {
-          return <SpotifyOutlined />;
+          return (
+            <div className={styles.centerIcon}>
+              <SoundOutlined style={{ fontSize: "25px" }} />
+            </div>
+          );
         }
         return null;
       },
@@ -185,8 +186,9 @@ const DashboardPage = () => {
       title: "Nome",
       dataIndex: "name",
       key: "name",
-      render: (text, record) => {
-        return <a href={record.url}>{text}</a>;
+      width: "25%",
+      render: (text) => {
+        return <p>{text}</p>;
       },
     },
     {
@@ -202,19 +204,43 @@ const DashboardPage = () => {
       title: "Data de Upload",
       dataIndex: "upload_date",
       key: "upload_date",
-      render: (text) => <p>{text.split("T")[0]}</p>,
+      render: (text) => {
+        const date = new Date(text);
+        const formattedDate = date.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          // second: "2-digit",
+        });
+        return <p>{formattedDate}</p>;
+      },
     },
     {
       title: "Ações",
       key: "actions",
+      width: "15%",
       render: (record) => (
         <div>
           <Button
             type="link"
             size="small"
+            style={{ color: "black" }}
+            onClick={() => {
+              setFileSelected(record);
+              setViewModalVisible(true);
+            }}
+          >
+            {/* Visualizar */}
+            <EyeOutlined />
+          </Button>
+          <Button
+            type="link"
+            size="small"
             onClick={() => handleEditClick(record.id)}
           >
-            Editar
+            <EditOutlined />
           </Button>
           <Button
             type="link"
@@ -222,7 +248,13 @@ const DashboardPage = () => {
             style={{ color: "red" }}
             onClick={() => handleDeleteClick(record.id)}
           >
-            Deletar
+            <DeleteOutlined />
+          </Button>
+          {/* donwload */}
+          <Button type="link" size="small">
+            <a href={record.url} download={record.name}>
+              <DownloadOutlined />
+            </a>
           </Button>
         </div>
       ),
@@ -241,7 +273,7 @@ const DashboardPage = () => {
       }
     }
   };
-  
+
   const handleCancelEdit = () => {
     setEditModalVisible(false);
     setFileToEdit(undefined);
@@ -252,6 +284,18 @@ const DashboardPage = () => {
       files?.results.find((file: { id: number }) => file.id === id)
     );
     setEditModalVisible(true);
+  };
+
+  const handleSearch = (value: string, _e: any, info: any) => {
+    // console.log(info?.source, value);
+    setSearch(value);
+    queryClient.invalidateQueries({ queryKey: ["files"] });
+  };
+
+  const handleFilterChange = (e: any) => {
+    setFilter(e.target.value);
+    setCurrentPage(1);
+    queryClient.invalidateQueries({ queryKey: ["files"] });
   };
 
   return (
@@ -276,10 +320,56 @@ const DashboardPage = () => {
           onSubmit={handleOkEdit}
           initialValues={
             fileToEdit
-              ? { description: fileToEdit.description, tags: fileToEdit.tags }
+              ? {
+                  name: fileToEdit.name,
+                  description: fileToEdit.description,
+                  tags: fileToEdit.tags,
+                  genre: fileToEdit.genre,
+                  mime_type: fileToEdit.mime_type,
+                }
               : {}
           }
         />
+      </Modal>
+      <Modal
+        title="Visualização"
+        open={viewModalVisible}
+        onCancel={() => {
+          setViewModalVisible(false);
+          setVideoQuality("480p");
+        }}
+        onOk={() => {
+          setViewModalVisible(false);
+          setVideoQuality("480p");
+        }}
+      >
+        {fileSelected?.mime_type.includes("image") && (
+          <img
+            src={fileSelected?.url}
+            alt={fileSelected?.name}
+            style={{ width: "100%" }}
+          />
+        )}
+        {fileSelected?.mime_type.includes("video") && (
+          <>
+            <video
+              src={fileSelected?.processed_video_urls?.[videoQuality as string]}
+              controls
+              style={{ width: "100%" }}
+            />
+            <Radio.Group value={videoQuality} onChange={handleQualityChange}>
+              {Object.keys(fileSelected.processed_video_urls).map((quality) => (
+                <Radio.Button key={quality} value={quality}>
+                  {quality}
+                </Radio.Button>
+              ))}
+            </Radio.Group>
+          </>
+        )}
+        {fileSelected?.mime_type.includes("audio") && (
+          <audio src={fileSelected?.url} controls />
+        )}
+        <FileInfo file={fileSelected as IFile} />
       </Modal>
       <RootLayout>
         <Content className={styles.dashboardContent}>
@@ -287,17 +377,16 @@ const DashboardPage = () => {
           <p style={{ fontSize: "18px" }}>Bem vindo, {data?.username}!</p>
           <Search
             placeholder="Pesquisar no SimpleBox"
-            onSearch={(value, _e, info) => console.log(info?.source, value)}
+            onSearch={handleSearch}
             enterButton
             style={{ marginBottom: 8 }}
-            disabled
           />
           <div className={styles.flexContainer}>
-            <Radio.Group value="all" disabled>
-              <Radio.Button value="all">Todos</Radio.Button>
-              <Radio.Button value="photos">Fotos</Radio.Button>
-              <Radio.Button value="videos">Vídeos</Radio.Button>
-              <Radio.Button value="audios">Áudios</Radio.Button>
+            <Radio.Group value={filter} onChange={handleFilterChange}>
+              <Radio.Button value="">Todos</Radio.Button>
+              <Radio.Button value="image">Fotos</Radio.Button>
+              <Radio.Button value="video">Vídeos</Radio.Button>
+              <Radio.Button value="audio">Áudios</Radio.Button>
             </Radio.Group>
             <div className={styles.uploadButtonContainer}>
               {percentCompleted > 0 && (
