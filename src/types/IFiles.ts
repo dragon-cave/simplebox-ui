@@ -16,6 +16,15 @@ interface IFile {
   audio_codec: string;
   width: number;
   height: number;
+  sample_rate: number;
+  channels: number;
+  genre: string;
+  processed_video_urls: {
+    [key: string]: string;
+  };
+  exif_data?: {
+    [key: string]: string;
+  };
 }
 
 export type { IFile };

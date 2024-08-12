@@ -25,9 +25,8 @@ import Search from "antd/es/input/Search";
 import { FileForm } from "../../../components/form/file/fileForm";
 import { IFile } from "../../../types/IFiles";
 import { FileInfo } from "../../../components/form/file/fileInfo";
+import { formatFileSize } from "../../../utils/formatSize";
 const { Content } = Layout;
-
-
 
 const DashboardPage = () => {
   const queryClient = useQueryClient();
@@ -36,13 +35,14 @@ const DashboardPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState(""); 
+  const [filter, setFilter] = useState("");
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<number>();
   const [fileToEdit, setFileToEdit] = useState<IFile>();
   const [fileSelected, setFileSelected] = useState<IFile>();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [videoQuality, setVideoQuality] = useState<string>();
 
   const { data } = useQuery({
     queryKey: ["user"],
@@ -140,18 +140,8 @@ const DashboardPage = () => {
     setFileToDelete(undefined);
   };
 
-  const formatFileSize = (sizeInBytes: number): string => {
-    if (sizeInBytes < 1024) {
-      return `${sizeInBytes} Bytes`;
-    } else if (sizeInBytes < 1024 * 1024) {
-      return `${(sizeInBytes / 1024).toFixed(2)} KB`;
-    } else if (sizeInBytes < 1024 * 1024 * 1024) {
-      return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
-    } else if (sizeInBytes < 1024 * 1024 * 1024 * 1024) {
-      return `${(sizeInBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-    } else {
-      return `${(sizeInBytes / (1024 * 1024 * 1024 * 1024)).toFixed(2)} TB`;
-    }
+  const handleQualityChange = (e: any) => {
+    setVideoQuality(e.target.value);
   };
 
   const columns: TableColumnsType<IFile> = [
@@ -213,7 +203,18 @@ const DashboardPage = () => {
       title: "Data de Upload",
       dataIndex: "upload_date",
       key: "upload_date",
-      render: (text) => <p>{text.split("T")[0]}</p>,
+      render: (text) => {
+        const date = new Date(text);
+        const formattedDate = date.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          // second: "2-digit",
+        });
+        return <p>{formattedDate}</p>;
+      },
     },
     {
       title: "Ações",
@@ -284,9 +285,9 @@ const DashboardPage = () => {
     queryClient.invalidateQueries({ queryKey: ["files"] });
   };
 
-  const handleFilterChange = (e: any) =>{
+  const handleFilterChange = (e: any) => {
     setFilter(e.target.value);
-    console.log('Valor selecionado:', e.target.value);
+    console.log("Valor selecionado:", e.target.value);
     queryClient.invalidateQueries({ queryKey: ["files"] });
   };
 
@@ -312,7 +313,13 @@ const DashboardPage = () => {
           onSubmit={handleOkEdit}
           initialValues={
             fileToEdit
-              ? { description: fileToEdit.description, tags: fileToEdit.tags }
+              ? {
+                  name: fileToEdit.name,
+                  description: fileToEdit.description,
+                  tags: fileToEdit.tags,
+                  genre: fileToEdit.genre,
+                  mime_type: fileToEdit.mime_type,
+                }
               : {}
           }
         />
@@ -320,7 +327,10 @@ const DashboardPage = () => {
       <Modal
         title="Visualização"
         open={viewModalVisible}
-        onCancel={() => setViewModalVisible(false)}
+        onCancel={() => {
+          setViewModalVisible(false);
+          setVideoQuality("480p");
+        }}
       >
         {fileSelected?.mime_type.includes("image") && (
           <img
@@ -330,7 +340,20 @@ const DashboardPage = () => {
           />
         )}
         {fileSelected?.mime_type.includes("video") && (
-          <video src={fileSelected?.url} controls style={{ width: "100%" }} />
+          <>
+            <video
+              src={fileSelected?.processed_video_urls?.[videoQuality as string]}
+              controls
+              style={{ width: "100%" }}
+            />
+            <Radio.Group value={videoQuality} onChange={handleQualityChange}>
+              {Object.keys(fileSelected.processed_video_urls).map((quality) => (
+                <Radio.Button key={quality} value={quality}>
+                  {quality}
+                </Radio.Button>
+              ))}
+            </Radio.Group>
+          </>
         )}
         {fileSelected?.mime_type.includes("audio") && (
           <audio src={fileSelected?.url} controls />
