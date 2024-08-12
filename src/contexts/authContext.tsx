@@ -188,7 +188,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
     } catch (error: any) {
       if (error.response) {
-        console.log(error.response);
+        // console.log(error.response);
         switch (error.response.status) {
           case 400:
             let errorMessage;
