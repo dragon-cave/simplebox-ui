@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext } from "react";
 import { Layout, Button, Avatar, Tooltip, message } from "antd";
 import { LogoutOutlined } from "@ant-design/icons";
 import { AuthContext } from "../../contexts/authContext";
