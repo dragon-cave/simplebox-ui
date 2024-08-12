@@ -107,7 +107,7 @@ const DashboardPage = () => {
     },
     onSuccess: () => {
       setPercentCompleted(100);
-      console.log(percentCompleted);
+      // console.log(percentCompleted);
       queryClient.invalidateQueries({ queryKey: ["files"] });
       message.success("Arquivo enviado com sucesso!");
     },
@@ -287,14 +287,14 @@ const DashboardPage = () => {
   };
 
   const handleSearch = (value: string, _e: any, info: any) => {
-    console.log(info?.source, value);
+    // console.log(info?.source, value);
     setSearch(value);
     queryClient.invalidateQueries({ queryKey: ["files"] });
   };
 
   const handleFilterChange = (e: any) => {
     setFilter(e.target.value);
-    console.log("Valor selecionado:", e.target.value);
+    setCurrentPage(1);
     queryClient.invalidateQueries({ queryKey: ["files"] });
   };
 
