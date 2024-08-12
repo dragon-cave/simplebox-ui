@@ -286,7 +286,7 @@ const DashboardPage = () => {
     setEditModalVisible(true);
   };
 
-  const handleSearch = (value: string, _e: any, info: any) => {
+  const handleSearch = (value: string, _e: any) => {
     // console.log(info?.source, value);
     setSearch(value);
     queryClient.invalidateQueries({ queryKey: ["files"] });

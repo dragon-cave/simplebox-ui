@@ -31,10 +31,10 @@ const ProfilePictureUploader = () => {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log(response);
+      // console.log(response);
     },
       onSuccess: (data) => {
-        console.log("Mutação bem-sucedida!", data);
+        // console.log("Mutação bem-sucedida!", data);
         queryClient.invalidateQueries({queryKey: ["profilePicture"]});
       },
 
