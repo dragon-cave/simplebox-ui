@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import { Layout, Button, Avatar, Tooltip, message } from "antd";
-import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
+import { LogoutOutlined } from "@ant-design/icons";
 import { AuthContext } from "../../contexts/authContext";
 import { api, endpoints } from "../../services/api";
 import styles from "./header.module.css";

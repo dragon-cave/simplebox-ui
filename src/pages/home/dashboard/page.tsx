@@ -186,7 +186,7 @@ const DashboardPage = () => {
       dataIndex: "name",
       key: "name",
       width: "25%",
-      render: (text, record) => {
+      render: (text) => {
         return <p>{text}</p>;
       },
     },

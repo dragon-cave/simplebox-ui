@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { IFile } from "../../../types/IFiles";
 import { Button, Modal } from "antd";
 import { formatFileSize } from "../../../utils/formatSize";
